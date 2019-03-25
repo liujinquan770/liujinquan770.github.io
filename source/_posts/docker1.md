@@ -6,6 +6,14 @@ tags: [docker]
 categories: docker
 ---
 
+记录DOKCER的常用命令，镜像，配置文件等
+
+
+
+![示例图片](docker1/6390001.jpg)
+
+<!--more-->
+
 ## 单机版KAFKA
 ```yaml
 version: "2"

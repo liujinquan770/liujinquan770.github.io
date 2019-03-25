@@ -64,7 +64,7 @@ def save_picture(url, addr):
 
 
 i = 0
-while i < 100:
+while i < 1:
     i += 1
     # [1] 打开网页
     temp_str = "http://cn.bing.com/HPImageArchive.aspx?format=xml&idx=%d&n=200" % (
@@ -82,3 +82,4 @@ while i < 100:
         local_time_file_name = str(local_time) + str(j) + ".jpg"
         print(local_time_file_name)
         save_picture(picture_url, local_time_file_name)
+        break
