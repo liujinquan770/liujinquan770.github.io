@@ -8,7 +8,7 @@ categories: docker
 
 记录DOKCER的标准安装方式。
 
-![示例图片](docker1/6390001.jpg)
+![示例图片](docker2/5828001.jpg)
 
 <!--more-->
 
