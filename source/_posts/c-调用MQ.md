@@ -3,6 +3,13 @@ title: 'c#调用MQ'
 date: 2018-05-23 17:44:26
 tags:
 ---
+
+MQ.
+
+![示例图片](csharp1/5501127.jpg)
+
+<!--more-->
+
 # 1 引入RabbitMQ.Client
 # 2 发送端代码
 ```
