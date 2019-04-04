@@ -137,3 +137,10 @@ public void WriteRawDataToDb(List<TreeDev.RawDataForDb> rawDatas)
 右击打开都可以。就是代码区显示红色波浪线，鼠标悬停时提示无法解析。
 网上有说路径问题，有说移除再添加。都不是需要的答案。
 后来删除根目录下.vs隐藏目录后，再打开sln工程即可。
+
+
+# git无法添加文件夹下的文件
+子文件夹下面含有 .git 文件夹，因此导致该子文件夹无法被 Git 跟踪，可以通过以下方法解决：
+git rm --cached folder
+git add folder
+其中 folder 为子文件夹。
