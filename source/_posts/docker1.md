@@ -170,3 +170,38 @@ services:
     volumes:
       - "/storage/kafka3:/kafka/logs"
 ```
+
+## 简单部署JAVAWEB
+1.设有下面几个文件  
+>Dockfile  
+docker-compose.yml  
+demo.jar  
+application.yml  
+
+2.Dockfile内容
+```yml
+#基础镜像：仓库是java，标签用8u66-jdk
+FROM java:8u66-jdk
+#当前镜像的维护者和联系方式
+MAINTAINER liujinquan 120026492@qq.com
+#将打包好的spring程序拷贝到容器中的指定位置
+ADD demo.jar /opt/demo/demo.jar
+ADD application.yml /opt/demo/application.yml
+#容器对外暴露8080端口
+EXPOSE 8080
+#容器启动后需要执行的命令
+CMD java -Djava.security.egd=file:/dev/./urandom -jar /opt/demo/demo.jar
+```  
+
+3.docker-compose.yml文件
+```yml
+version: "2"
+services:
+  web:
+    build: .
+    ports:
+      - "8080:8080"       
+```
+
+4.上传到服务器后执行命令   
+>docker-compose up --build
