@@ -98,7 +98,7 @@ for message in consumer:
                                           message.value))
 ```
 
-## AVRO的序列化和反序列化
+## AVRO的序列化和反序列化(c#)
 引入Confluent.Kafka.Avro
 ```csharp
 private byte[] SerializeFromSpecial<T>(T t) where T : ISpecificRecord
@@ -127,7 +127,7 @@ private T DeseializeToSpecial<T>(byte[] data) where T : ISpecificRecord
     return result;
 }
 ```
-[avro-gen工具](avrogen.zip)  
+C#代码生成工具 [avro-gen工具](avrogen.zip)  
 
 ## AVRO的序列化和反序列化(python)
 引入kafka-python和fastavro
@@ -844,3 +844,56 @@ avsc文件
   ]
 }
 ```
+
+## AVRO的序列化和反序列化(java)
+1.引入POM.xml
+```xml
+<!-- avro -->
+<!-- https://mvnrepository.com/artifact/org.apache.avro/avro -->
+<dependency>
+    <groupId>org.apache.avro</groupId>
+    <artifactId>avro</artifactId>
+    <version>1.8.1</version>
+</dependency>
+```
+2.函数
+```java
+import org.apache.avro.io.*;
+import org.apache.avro.specific.SpecificDatumReader;
+import org.apache.avro.specific.SpecificDatumWriter;
+import org.apache.avro.specific.SpecificRecordBase;
+/** 序列化
+  * @param data 需要序列化的对象实例
+  * @param <T>
+  * @return 序列化的字节
+  * @throws IOException
+  */
+public static <T extends SpecificRecordBase> byte[] serializeSpecial(T data) throws IOException {
+    DatumWriter<T> userDatumWriter = new SpecificDatumWriter<>(data.getSchema());
+    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+    BinaryEncoder binaryEncoder = EncoderFactory.get().directBinaryEncoder(outputStream, null);
+
+    userDatumWriter.write(data, binaryEncoder);
+    return outputStream.toByteArray();
+}
+
+/**
+  * 反序列化
+  * @param data 字节
+  * @param clazz 类名,获取SCHEMA和实例用
+  * @param <T>
+  * @return 对象实例
+  * @throws IOException
+  * @throws IllegalAccessException
+  * @throws InstantiationException
+  */
+public static <T extends SpecificRecordBase> T deserializeSpecial(byte[] data, Class<T> clazz) throws IOException, IllegalAccessException, InstantiationException {
+    T o = clazz.newInstance();
+
+    DatumReader<T> userDatumReader = new SpecificDatumReader<>(o.getSchema());
+    BinaryDecoder binaryEncoder = DecoderFactory.get().directBinaryDecoder(new ByteArrayInputStream(data), null);
+
+    return userDatumReader.read(null, binaryEncoder);
+}
+```
+java代码生成工具[avro-tools工具](avro-tools.7z)
