@@ -204,4 +204,31 @@ services:
 ```
 
 4.上传到服务器后执行命令   
->docker-compose up --build
+>docker-compose up --build  
+
+## 部署PYTHON脚本
+1.Dockfile
+```yml
+# 基于镜像基础
+FROM python:3.6.8
+  
+# 设置代码文件夹工作目录 /app
+WORKDIR /app
+  
+# 复制当前代码文件到容器中 /app
+ADD . /app
+  
+# 安装所需的包
+RUN pip install -r requirements.txt -i https://pypi.douban.com/simple
+  
+# Run app.py when the container launches
+CMD ["python", "kafka_producer_demo.py"]
+```
+
+2.docker-compose.yml
+```yml
+version: "2"
+services:
+  my_python:
+    build: .
+```
