@@ -1947,3 +1947,80 @@ def OpenAndSave():
 
 OpenAndSave()
 ```
+
+## 另外一种多进程多线程的类
+从Python3.2开始，标准库为我们提供了concurrent.futures模块，它提供了ThreadPoolExecutor和ProcessPoolExecutor两个类ThreadPoolExecutor和ProcessPoolExecutor继承了Executor，分别被用来创建线程池和进程池的代码。实现了对threading和multiprocessing的更高级的抽象，对编写线程池/进程池提供了直接的支持。 
+concurrent.futures基础模块是executor和future  
+https://www.cnblogs.com/huchong/p/7459324.html  
+```python
+# p.submit(task,i).result()即同步执行
+import os
+import random
+import signal
+import sys
+import time
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+
+import psutil
+
+
+def download(url):
+    ret = os.system("you-get {0} --debug".format(url))
+    return ret
+
+
+def init_worker():
+    # signal.signal(signal.SIGINT, signal.SIG_IGN)
+    signal.signal(signal.SIGINT, exit)
+    signal.signal(signal.SIGTERM, exit)
+
+
+def exit(signum, frame):
+    print("You choose to stop me.")
+    # os._exit()
+    sys.exit()
+
+
+def main2():
+    init_worker()
+
+    base_url = r"https://www.bilibili.com/video/av27969216/?p="
+    total = 200
+    urls = [base_url + str(i) for i in range(total)]
+
+    p = ProcessPoolExecutor(max_workers=psutil.cpu_count())
+    start = time.time()
+
+    for url in urls:
+        try:
+            p.submit(download, url)
+        except KeyboardInterrupt:
+            break
+
+    p.shutdown()
+    print("=" * 30)
+    print(time.time() - start)
+
+
+def main3():
+    init_worker()
+
+    base_url = r"https://www.bilibili.com/video/av27969216/?p="
+    total = 10
+    urls = [base_url + str(i) for i in range(total)]
+
+    executor = ThreadPoolExecutor(max_workers=psutil.cpu_count())
+
+    start = time.time()
+    i = 0
+    for result in executor.map(download, urls):
+        print("task{}:{}".format(i, result))
+        i += 1
+
+    print("=" * 30)
+    print(time.time() - start)
+
+
+if __name__ == "__main__":
+    main3()
+```
