@@ -754,4 +754,250 @@ if __name__ == "__main__":
 ```
 ![效果图](csharp14/20190802114915.png)
 
+## 补充使用opencv-python绘制的代码
+```python
+"""
+@Description: In User Settings Edit
+@Author: your name
+@Date: 2019-08-07 20:00:04
+@LastEditTime: 2019-08-07 22:04:54
+@LastEditors: Please set LastEditors
+"""
+
+
+import math
+
+import cv2 as cv
+import numpy as np
+
+
+class DrawDxfCv(object):
+    def __init__(self, x1, y1, x2, y2):
+        super(DrawDxfCv, self).__init__()
+        self.init_img(x1, y1, x2, y2)
+        self.offset = (-100, -100)
+        self.x1 = x1
+        self.y1 = y1
+        print(x2 - x1, y2 - y1)
+
+    def init_img(self, x1, y1, x2, y2):
+        print(x1, y1, x2, y2)
+        self.img = np.zeros((int(abs(x2 - x1) * 2), int(abs(y2 - y1) * 2), 3), np.uint8)
+        self.pointer_color = (0, 0, 255)
+        self.thickness = 1
+
+    def draw_circles(self, circles):
+        """
+        @description: 绘制圆
+        @param: List[Tuple(float, float, float), ...], 
+                like 'List[(center_x, center_y, radius), ...]'
+        @return: none
+        """
+        cp = np.array(circles)
+        self.x1, self.y1 = cp.min(0)[0] + self.offset[0], cp.min(0)[1] + self.offset[1]
+        ratio = 2
+        cv.circle(self.img, (0, 0), 5, self.pointer_color, self.thickness)
+        for c in circles:
+            a = c[0]
+            b = c[1]
+            r = c[2]
+            point = (int(a - self.x1) * ratio, int(abs(b - self.y1)) * ratio)
+            point_size = int(r) * ratio
+            # print(point)
+            cv.circle(self.img, point, point_size, self.pointer_color, self.thickness)
+
+    def draw_arcs(self, arcs):
+        """
+        @description: 绘制圆弧
+        @param: List[(center_x, center_y, radius, start_angle, end_angle), ...]
+        @return: 
+        """
+        ratio = 2
+        for c in arcs:
+            a = abs(int(c[0] - self.x1)) * ratio
+            b = abs(int(c[1] - self.y1)) * ratio
+            r = abs(int(c[2])) * ratio
+            s_angle = abs(int(c[3]))
+            e_angle = abs(int(c[4]))
+            if s_angle > e_angle:
+                s_angle = s_angle - 360
+            # cv::ellipse(image, center, cv::Size(radius, radius), angle, start_angle, end_angle, cv::Scalar(255, 255, 255));
+            cv.ellipse(
+                self.img, (a, b), (r, r), 0, s_angle, e_angle, (255, 255, 255), 1
+            )
+
+    def draw_lines(self, lines):
+        """
+        @description: 绘制直线
+        @param: List[(start_x, start_y, end_x, end_y), ...]
+        @return: 
+        """
+        # cv2.line(img, Point pt1, Point pt2, color, thickness=1, line_type=8, shift=0)
+        ratio = 2
+        for line in lines:
+            # x = [line[0], line[2]]
+            # y = [line[1], line[3]]
+            start_x = abs(int(line[0] - self.x1)) * ratio
+            start_y = abs(int(line[1] - self.y1)) * ratio
+            end_x = abs(int(line[2] - self.x1)) * ratio
+            end_y = abs(int(line[3] - self.y1)) * ratio
+            cv.line(self.img, (start_x, start_y), (end_x, end_y), (0, 255, 255), 1)
+
+    def draw_polylines(self, polylines):
+        """
+        @description: 绘制多段线
+            使用前后两个点绘制其中一段,收尾连接(闭合)。
+            其中凸度取前一个顶点的数据
+        @param {type} (start_x, start_y, bulge)
+        @param is_close, string, -> 'true', or 'false'
+                List[(is_closed, [(x,y,b),x,y,b),...]), ...]
+        @return: 
+        """
+        for poly in polylines:
+            is_closed = poly[0]
+            vs = poly[1]  # 顶点集合
+            cnt = len(vs)
+            if not is_closed:
+                cnt = cnt - 1
+            for i in range(0, cnt):
+                start = i
+                end = (i + 1) % len(vs)
+                start_x = vs[start][0]
+                start_y = vs[start][1]
+                bulge = vs[start][2]
+                end_x = vs[end][0]
+                end_y = vs[end][1]
+                self.draw_polylines_sub(start_x, start_y, end_x, end_y, bulge)
+
+    def draw_polylines_sub(self, start_x, start_y, end_x, end_y, bulge):
+        """
+        @description: 绘制多线段的绘制函数
+            考虑到浮点数的精度，小于0.1直接使用直线代替，
+            凸度不为零的，则是圆弧，需要根据两点和凸度计算圆心，半径，起始角度和终止角度
+        @param {type} 
+        @return: 
+        """
+        ratio = 2
+        # start_x = abs(start_x)
+        # start_y = abs(start_y)
+        # end_x = abs(end_x)
+        # end_y = abs(end_y)
+        if bulge > -0.1 and bulge < 0.1:
+            start_x = int(start_x - self.x1) * ratio
+            start_y = abs(int(start_y - self.y1)) * ratio
+            end_x = int(end_x - self.x1) * ratio
+            end_y = abs(int(end_y - self.y1)) * ratio
+            print(start_x, start_y, end_x, end_y)
+            cv.line(self.img, (start_x, start_y), (end_x, end_y), (0, 255, 255), 1)
+        else:
+            center_x, center_y, r, s_angle, e_angle = self.calc_center_radius_angle_by_pos(
+                start_x, start_y, end_x, end_y, bulge
+            )
+            center_x = int(center_x - self.x1) * ratio
+            center_y = abs(int(center_y - self.y1)) * ratio
+            r = int(r) * ratio
+            cv.ellipse(
+                self.img,
+                (center_x, center_y),
+                (r, r),
+                0,
+                int(s_angle),
+                int(e_angle),
+                (255, 255, 255),
+                1
+            )
+            # cv.ellipse(
+            #     self.img, (a, b), (r, r), 0, s_angle, e_angle, (255, 255, 255), 1
+            # )
+
+    def calc_center_by_bulge(self, start_x, start_y, end_x, end_y, bulge):
+        """
+        @description: 两点和凸度,计算圆心。
+        @param {type} 
+        @return: 
+        """
+        bulge = 0.5 * (1 / bulge - bulge)
+        center_x = 0.5 * ((start_x + end_x) - (end_y - start_y) * bulge)
+        center_y = 0.5 * ((start_y + end_y) + (end_x - start_x) * bulge)
+        return center_x, center_y
+
+    def calc_radius_by_bulge(self, start_x, start_y, end_x, end_y, bulge):
+        """
+        @description: 两点和凸度,计算半径
+        @param {type} 
+        @return: 
+        """
+        # 1.求夹角角度
+        theta = 4 * math.atan(bulge)  # 弧度
+        angle = theta * 180 / np.pi
+        # 2.求半径
+        r = math.sqrt(
+            math.pow((end_x - start_x), 2) + math.pow((end_y - start_y), 2)
+        ) / abs((2 * math.sin(theta / 2)))
+        return abs(r), angle
+
+    def calc_center_radius_angle_by_pos(self, start_x, start_y, end_x, end_y, bulge):
+        """
+        @description: 
+        @param {type} 
+        @return: 
+        """
+        # 1.先计算圆心角
+        center_x, center_y = self.calc_center_by_bulge(
+            start_x, start_y, end_x, end_y, bulge
+        )
+        radius, angle_start2end = self.calc_radius_by_bulge(
+            start_x, start_y, end_x, end_y, bulge
+        )
+
+        # 2. 计算起始线的角度
+        angle_x2start = self.calc_angle_x2start(start_x, start_y, center_x, center_y)
+        # 3. 计算起始线的角度
+        angle_x2end = angle_x2start + angle_start2end
+
+        return center_x, center_y, radius, angle_x2start, angle_x2end
+
+    def calc_angle_x2start(self, x, y, center_x, center_y):
+        # x = round(x, 2)
+        # y = round(y, 2)
+        # center_x = round(center_x, 2)
+        # center_y = round(center_y, 2)
+        angle_x2start = 0
+        if abs(x - center_x) < 0.01 and y >= center_y:
+            angle_x2start = (np.pi / 2) * 180 / np.pi
+        elif abs(x - center_x) < 0.01 and y < center_y:
+            angle_x2start = (-np.pi / 2) * 180 / np.pi
+        elif abs(y - center_y) < 0.01 and x >= center_x:
+            angle_x2start = 0
+        elif abs(y - center_y) < 0.01 and x < center_x:
+            angle_x2start = np.pi * 180 / np.pi
+        else:
+            theta = math.atan((y - center_y) / (x - center_x))
+            angle_x2start = theta * 180 / np.pi
+            angle_x2start = abs(angle_x2start)
+            # 第一象限
+            if x > center_x and y > center_y:
+                angle_x2start = angle_x2start
+            elif x < center_x and y > center_y:
+                angle_x2start = 180 - angle_x2start
+            elif x < center_x and y < center_y:
+                angle_x2start = -(180 - angle_x2start)
+            elif x > center_x and y < center_y:
+                angle_x2start = -angle_x2start
+        return angle_x2start
+
+    def show(self):
+        cv.namedWindow("image")
+        cv.imshow("image", self.img)
+        cv.waitKey(0)
+
+    def close(self):
+        cv.destroyAllWindows()
+
+
+if __name__ == "__main__":
+    cv = DrawDxfCv(0, 100, 0, 100)
+
+```
+
 
