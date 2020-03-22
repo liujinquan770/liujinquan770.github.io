@@ -1,6 +1,6 @@
 ---
 title: 杂文1 修改DNS方法加速github访问速度
-date: 2019-08-08 21:18:22
+date: 2020-03-20 21:18:22
 modified: 
 tags: [eassy]
 categories: essay
